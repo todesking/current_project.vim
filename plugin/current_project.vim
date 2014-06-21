@@ -16,7 +16,7 @@ endfunction " }}}
 " }}}
 
 " Detection method {{{
-function s:register_project_detection_method(definition) abort
+function! s:register_project_detection_method(definition) abort
 	call insert(s:project_detection_methods, a:definition)
 endfunction
 
@@ -106,6 +106,10 @@ function! CurrentProjectInfo(...) abort " {{{
 	let s:project_cache[dir] = info
 	let s:project_cache[file_path] = info
 	return info
+endfunction " }}}
+
+function! CurrentProjectClearCache() abort " {{{
+	let s:project_cache = {}
 endfunction " }}}
 
 function! s:project_root_for(file_path) abort abort " {{{
