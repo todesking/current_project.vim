@@ -1,5 +1,6 @@
 " file_path:h => project_info
 let s:project_cache = {}
+let s:subproject_patterns = []
 let s:project_marker_dirs = ['lib', 'ext', 'test', 'spec', 'bin', 'autoload', 'plugins', 'plugin', 'src']
 let s:project_replace_pattern = '\(.*\)/\('.join(s:project_marker_dirs,'\|').'\)\(/.\{-}\)\?$'
 
@@ -112,6 +113,10 @@ function! CurrentProjectClearCache() abort " {{{
 	let s:project_cache = {}
 endfunction " }}}
 
+function! CurrentProjectAddSubprojectRoot(pat) abort " {{{
+	call add(s:subproject_patterns, a:pat)
+endfunction " }}}
+
 function! s:project_root_for(file_path) abort abort " {{{
 	let dir = fnamemodify(a:file_path, ':p:h')
 
@@ -129,7 +134,14 @@ function! s:project_root_for(file_path) abort abort " {{{
 endfunction " }}}
 
 function! s:subproject_name(root, path) abort abort " {{{
-	let name = matchstr(fnamemodify(a:path, ':p'), '^'.a:root.'/\zs[^/]\+\ze/.*')
+	let relpath = matchstr(fnamemodify(a:path, ':p'), '^'.a:root.'/\zs[^/]\+/.*\ze')
+	for sr in s:subproject_patterns
+		let m = matchlist(relpath, sr)
+		if !empty(m)
+			return m[1]
+		endif
+	endfor
+	let name = matchstr(relpath, '^/\zs[^/]\+\ze/.*')
 	if name != -1 && !empty(name) && index(s:project_marker_dirs, name) == -1
 		for suffix in s:project_marker_dirs
 			if getftype(a:root.'/'.name.'/'.suffix) == 'dir'
