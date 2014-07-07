@@ -1,10 +1,13 @@
 " file_path:h => project_info
 let s:project_cache = {}
-let s:subproject_patterns = []
+" project_root => [subproject_root_pat]
+let s:subproject_patterns = {}
 let s:project_marker_dirs = ['lib', 'ext', 'test', 'spec', 'bin', 'autoload', 'plugins', 'plugin', 'src']
 let s:project_replace_pattern = '\(.*\)/\('.join(s:project_marker_dirs,'\|').'\)\(/.\{-}\)\?$'
 
 let s:default_project_dir = expand('~/projects/')
+
+let s:setting_dir = expand('~/.current_project.vim')
 
 let s:project_root_filenames = ['.git', '.svn']
 
@@ -114,7 +117,35 @@ function! CurrentProjectClearCache() abort " {{{
 endfunction " }}}
 
 function! CurrentProjectAddSubprojectRoot(pat) abort " {{{
-	call add(s:subproject_patterns, a:pat)
+	let info = CurrentProjectInfo()
+	let s:subproject_patterns[info.main_path] = add(get(s:subproject_patterns, info.main_path, []), a:pat)
+	call CurrentProjectClearCache()
+endfunction " }}}
+
+function! CurrentProjectSaveSettings() abort " {{{
+	let lines = []
+	for root in keys(s:subproject_patterns)
+		for pat in s:subproject_patterns[root]
+			let lines += [root . "\t" . pat]
+		endfor
+	endfor
+	if(!getftype('s:setting_dir') == 'dir')
+		call mkdir(s:setting_dir, 'p')
+	endif
+	call writefile(lines, s:setting_dir . '/subproject.tsv')
+endfunction " }}}
+
+function! CurrentProjectLoadSettings() abort " {{{
+	let file = s:setting_dir . '/subproject.tsv'
+	let s:subproject_patterns = {}
+	if(getftype(file) != 'file')
+		return
+	endif
+	let lines = readfile(file)
+	for l in lines
+		let [root, pat] = split(l, "\t", 1)
+		let s:subproject_patterns[root] = add(get(s:subproject_patterns, root, []), pat)
+	endfor
 endfunction " }}}
 
 function! s:project_root_for(file_path) abort abort " {{{
@@ -135,7 +166,7 @@ endfunction " }}}
 
 function! s:subproject_name(root, path) abort abort " {{{
 	let relpath = matchstr(fnamemodify(a:path, ':p'), '^'.a:root.'/\zs[^/]\+/.*\ze')
-	for sr in s:subproject_patterns
+	for sr in get(s:subproject_patterns, a:root, [])
 		let m = matchlist(relpath, sr)
 		if !empty(m)
 			return m[1]
@@ -152,3 +183,10 @@ function! s:subproject_name(root, path) abort abort " {{{
 	return ''
 endfunction " }}}
 
+
+call CurrentProjectLoadSettings()
+
+augroup current_project
+	autocmd!
+	autocmd VimLeavePre * call CurrentProjectSaveSettings()
+augroup END
