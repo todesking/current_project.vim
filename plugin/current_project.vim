@@ -2,6 +2,7 @@
 let s:project_cache = {}
 " project_root => [subproject_root_pat]
 let s:subproject_patterns = {}
+let s:subproject_patterns_orig = {}
 let s:project_marker_dirs = ['lib', 'ext', 'test', 'spec', 'bin', 'autoload', 'plugins', 'plugin', 'src']
 let s:project_replace_pattern = '\(.*\)/\('.join(s:project_marker_dirs,'\|').'\)\(/.\{-}\)\?$'
 
@@ -123,6 +124,9 @@ function! CurrentProjectAddSubprojectRoot(pat) abort " {{{
 endfunction " }}}
 
 function! CurrentProjectSaveSettings() abort " {{{
+	if s:subproject_patterns == s:subproject_patterns_orig
+		return
+	endif
 	let lines = []
 	for root in keys(s:subproject_patterns)
 		for pat in s:subproject_patterns[root]
@@ -146,6 +150,7 @@ function! CurrentProjectLoadSettings() abort " {{{
 		let [root, pat] = split(l, "\t", 1)
 		let s:subproject_patterns[root] = add(get(s:subproject_patterns, root, []), pat)
 	endfor
+	let s:subproject_patterns_orig = s:subproject_patterns
 endfunction " }}}
 
 function! s:project_root_for(file_path) abort abort " {{{
