@@ -45,7 +45,7 @@ function! s:dm.project_root_of(dir) abort " {{{
 			return ''
 		endif
 		for f in s:project_root_filenames
-			if !empty(globpath(d, '/' . f))
+			if filereadable(d . '/' . f) || isdirectory(d . '/' . f)
 				return d
 			endif
 		endfor
@@ -153,7 +153,7 @@ function! CurrentProjectLoadSettings() abort " {{{
 	let s:subproject_patterns_orig = s:subproject_patterns
 endfunction " }}}
 
-function! s:project_root_for(file_path) abort abort " {{{
+function! s:project_root_for(file_path) abort " {{{
 	let dir = fnamemodify(a:file_path, ':p:h')
 
 	for method in s:project_detection_methods
