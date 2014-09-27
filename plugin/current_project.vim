@@ -10,7 +10,7 @@ let s:default_project_dir = expand('~/projects/')
 
 let s:setting_dir = expand('~/.current_project.vim')
 
-let s:project_root_filenames = ['.git', '.svn']
+let s:project_root_filenames = ['.git', '.svn', '.hg']
 
 let s:project_detection_methods = []
 
