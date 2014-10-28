@@ -3,7 +3,7 @@ let s:project_cache = {}
 " project_root => [subproject_root_pat]
 let s:subproject_patterns = {}
 let s:subproject_patterns_orig = {}
-let s:project_marker_dirs = ['lib', 'ext', 'test', 'spec', 'bin', 'autoload', 'plugins', 'plugin', 'src']
+let s:project_marker_dirs = ['lib', 'ext', 'spec', 'bin', 'autoload', 'plugins', 'plugin']
 let s:project_replace_pattern = '\(.*\)/\('.join(s:project_marker_dirs,'\|').'\)\(/.\{-}\)\?$'
 
 let s:default_project_dir = expand('~/projects/')
