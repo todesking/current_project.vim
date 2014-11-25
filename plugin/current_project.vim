@@ -68,6 +68,13 @@ let s:empty_project_info = {
 \  'main_path': '',
 \  'sub_path': '',
 \}
+
+function! CurrentProjectFileInfo(file) abort " {{{
+	let pinfo = copy(CurrentProjectInfo(a:file))
+	let pinfo.file_path = substitute(fnamemodify(a:file, ':p'), '^' . pinfo.path . '/', '', '')
+	return pinfo
+endfunction " }}}
+
 function! CurrentProjectInfo(...) abort " {{{
 	if a:0 == 0
 		let file_path = expand('%')
@@ -79,7 +86,7 @@ function! CurrentProjectInfo(...) abort " {{{
 
 	if file_path == ''
 		return copy(s:empty_project_info)
-	else
+	endif
 
 	if has_key(s:project_cache, file_path)
 		return s:project_cache[file_path]
