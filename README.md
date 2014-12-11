@@ -3,7 +3,7 @@
 ## Usage
 
 ```vim
-let info = CurrentProjectInfo() " returns current buffer's information
+let info = current_project#info() " returns current buffer's information
 
 " =>
 {
@@ -13,6 +13,15 @@ let info = CurrentProjectInfo() " returns current buffer's information
 \ 'main_path': '~/.vim/bundle/current_project.vim',
 \ 'sub_name': '',
 \ 'sub_path': '~/.vim/bundle/current_project.vim',
-\ 'file_path': 'README.md',
 \ }
 ```
+
+## Project detection logic
+
+To find project root: `~/projects/`, or search `.git`, `.svn`, `.hg`(see `s:project_root_of()`)
+
+To find subproject: User-defined subproject pattern(see `s:subproject_root()`, `s:subproject_patterns`)
+
+## Setting directory
+
+`~/.current_project.vim/`
