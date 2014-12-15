@@ -130,6 +130,32 @@ function! current_project#subproject_patterns(...) abort " {{{
 	return get(s:subproject_patterns, info.main_path, [])
 endfunction " }}}
 
+function! current_project#complete(ArgLead, CmdLine, CursorPos) abort " {{{
+	let prefix = current_project#info(expand('%')).path
+	return s:complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
+endfunction " }}}
+
+function! current_project#complete_main(ArgLead, CmdLine, CursorPos) abort " {{{
+	let prefix = current_project#info(expand('%')).main_path
+	return s:complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
+endfunction " }}}
+
+" @vimlint(EVL103, 1)
+function! s:complete_dir(prefix, ArgLead, CmdLine, CursorPos) abort " {{{
+	let prefix = a:prefix . '/'
+	let candidates = glob(prefix . a:ArgLead . '*', 1, 1)
+	let result = []
+	for c in candidates
+		if isdirectory(c)
+			call add(result, substitute(c, prefix, '', '') . '/')
+		else
+			call add(result, substitute(c, prefix, '', ''))
+		endif
+	endfor
+	return result
+endfunction  " }}}
+" @vimlint(EVL103, 0)
+
 function! s:project_root_of(dir) abort " {{{
 	let d = fnamemodify(a:dir, ':p')
 	while fnamemodify(d, ':h') != d

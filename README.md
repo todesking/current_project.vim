@@ -32,30 +32,8 @@ To find subproject: User-defined subproject pattern(see `s:subproject_root()`, `
 
 ```vim
 " e-in-current-project
-command! -complete=customlist,Vimrc_complete_current_project_files -nargs=1 Pe :exec ':e ' . current_project#info().path . '/' . "<args>"
-command! -complete=customlist,Vimrc_complete_current_main_project_files -nargs=1 PE :exec ':e ' . current_project#info().main_path . '/' . "<args>"
-
-function! Vimrc_complete_current_project_files(ArgLead, CmdLine, CursorPos) abort " {{{
-	let prefix = current_project#info(expand('%')).path
-	return Vimrc_complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
-endfunction " }}}
-function! Vimrc_complete_current_main_project_files(ArgLead, CmdLine, CursorPos) abort " {{{
-	let prefix = current_project#info(expand('%')).main_path
-	return Vimrc_complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
-endfunction " }}}
-function! Vimrc_complete_dir(prefix, ArgLead, CmdLine, CursorPos) abort " {{{
-	let prefix = a:prefix . '/'
-	let candidates = glob(prefix.a:ArgLead.'*', 1, 1)
-	let result = []
-	for c in candidates
-		if isdirectory(c)
-			call add(result, substitute(c, prefix, '', '').'/')
-		else
-			call add(result, substitute(c, prefix, '', ''))
-		endif
-	endfor
-	return result
-endfunction  " }}}
+command! -complete=customlist,current_project#complete -nargs=1 Pe :exec ':e ' . current_project#info().path . '/' . "<args>"
+command! -complete=customlist,current_project#complete_main -nargs=1 PE :exec ':e ' . current_project#info().main_path . '/' . "<args>"
 ```
 
 ```vim
