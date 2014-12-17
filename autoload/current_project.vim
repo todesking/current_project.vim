@@ -140,6 +140,13 @@ function! current_project#complete_main(ArgLead, CmdLine, CursorPos) abort " {{{
 	return s:complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
 endfunction " }}}
 
+function! current_project#clear_sub_patterns() abort " {{{
+	let info = current_project#info()
+	if has_key(s:subproject_patterns, info.main_path)
+		call remove(s:subproject_patterns, info.main_path)
+	endif
+endfunction " }}}
+
 function! current_project#sub_pattern_list() abort " {{{
 	let info = current_project#info()
 	let patterns = get(s:subproject_patterns, info.main_path, [])
