@@ -140,6 +140,19 @@ function! current_project#complete_main(ArgLead, CmdLine, CursorPos) abort " {{{
 	return s:complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
 endfunction " }}}
 
+function! current_project#sub_pattern_list() abort " {{{
+	let info = current_project#info()
+	let patterns = get(s:subproject_patterns, info.main_path, [])
+	if empty(patterns)
+		echo 'No subproject patterns for ' . info.main_path
+	else
+		echo 'Subproject patterns for ' . info.main_path . ':'
+		for pat in patterns
+			echo '  ' . pat
+		endfor
+	endif
+endfunction " }}}
+
 " @vimlint(EVL103, 1)
 function! s:complete_dir(prefix, ArgLead, CmdLine, CursorPos) abort " {{{
 	let prefix = a:prefix . '/'
@@ -180,12 +193,3 @@ function! s:subproject_name(root, path) abort abort " {{{
 	endfor
 	return ''
 endfunction " }}}
-
-
-augroup current_project
-	autocmd!
-	autocmd VimLeavePre * call current_project#save_settings()
-augroup END
-
-call current_project#load_settings()
-
