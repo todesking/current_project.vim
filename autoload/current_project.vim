@@ -113,6 +113,7 @@ endfunction " }}}
 function! current_project#load_settings() abort " {{{
 	let file = s:setting_dir . '/subproject.tsv'
 	let s:subproject_patterns = {}
+	let s:subproject_patterns_orig = {}
 	if(getftype(file) != 'file')
 		return
 	endif
@@ -121,7 +122,7 @@ function! current_project#load_settings() abort " {{{
 		let [root, pat] = split(l, "\t", 1)
 		let s:subproject_patterns[root] = add(get(s:subproject_patterns, root, []), pat)
 	endfor
-	let s:subproject_patterns_orig = s:subproject_patterns
+	let s:subproject_patterns_orig = copy(s:subproject_patterns)
 	call current_project#clear_cache()
 endfunction " }}}
 
