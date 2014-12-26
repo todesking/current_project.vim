@@ -196,7 +196,7 @@ function! s:subproject_name(root, path) abort abort " {{{
 	for sr in get(s:subproject_patterns, a:root, [])
 		let m = matchlist(relpath, sr)
 		if !empty(m)
-			return m[1]
+			return m[0]
 		endif
 	endfor
 	return ''
