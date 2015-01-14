@@ -42,7 +42,7 @@ function! current_project#info(...) abort " {{{
 	elseif a:0 == 1
 		let file_path = fnamemodify(a:1, ':p')
 	else
-		throw "Illegal argument size(expected 0 or 1): ".a:0
+		throw 'Illegal argument size(expected 0 or 1):' . a:0
 	endif
 
 	if empty(file_path)
@@ -53,10 +53,14 @@ function! current_project#info(...) abort " {{{
 		return s:project_cache[file_path]
 	endif
 
-	let dir = fnamemodify(file_path, ':p:h')
-	if has_key(s:project_cache, dir)
-		let s:project_cache[file_path] = s:project_cache[dir]
-		return s:project_cache[dir]
+	if !isdirectory(file_path)
+		let dir = fnamemodify(file_path, ':p:h')
+		if has_key(s:project_cache, dir)
+			let s:project_cache[file_path] = s:project_cache[dir]
+			return s:project_cache[dir]
+		endif
+	else
+		let dir = file_path
 	endif
 
 	let project_root = s:project_root_of(file_path)
@@ -183,7 +187,7 @@ function! s:project_root_of(dir) abort " {{{
 		for f in s:project_root_filenames
 			let path = d . '/' . f
 			if isdirectory(path) || filereadable(path)
-				return d
+				return substitute(d, '/$', '', '')
 			endif
 		endfor
 		let d = fnamemodify(d, ':h')
