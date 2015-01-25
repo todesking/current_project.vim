@@ -7,6 +7,9 @@ let s:subproject_patterns = {}
 " for persistent purpose
 let s:subproject_patterns_orig = {}
 
+" array of {name, detect(path): info|{}}
+let s:detection_mehods = []
+
 let s:default_project_container_dirs = [
 	\ fnamemodify('~/projects/', ':p'),
 \ ]
@@ -29,6 +32,27 @@ let s:empty_project_info = {
 \  'main_path': '',
 \  'sub_path': '',
 \}
+lockvar! s:empty_project_info
+
+" Detection method Management {{{
+function! current_project#register_detection_method(def) abort " {{{
+	let def = copy(a:def)
+	lockvar! def
+	let i = 0
+	while i < len(s:detection_mehods)
+		if s:detection_mehods[i].name ==# def.name
+			let s:detection_mehods[i] = def
+			return
+		endif
+		let i+= 1
+	endwhile
+	call insert(s:detection_mehods, def)
+endfunction " }}}
+
+function! current_project#remove_detection_method(name) abort " {{{
+	call filter(s:detection_mehods, 'v:val.name == a:name')
+endfunction " }}}
+" }}}
 
 function! current_project#file_info(file) abort " {{{
 	let pinfo = copy(current_project#info(a:file))
@@ -63,24 +87,17 @@ function! current_project#info(...) abort " {{{
 		let dir = file_path
 	endif
 
-	let project_root = s:project_root_of(file_path)
-	let sub_project_name = s:subproject_name(project_root, file_path)
-	let main_project_name = fnamemodify(project_root, ':t')
-	let name = main_project_name
-	let path = project_root
-	if !empty(sub_project_name)
-		let name .= '/'.sub_project_name
-		let path .= '/'.sub_project_name
-	endif
+	let info = {}
+	for m in s:detection_mehods
+		let info = m.detect(file_path)
+		if len(info)
+			break
+		endif
+	endfor
 
-	let info = {
-	\  'name': name,
-	\  'main_name': main_project_name,
-	\  'sub_name': sub_project_name,
-	\  'path': path,
-	\  'main_path': project_root,
-	\  'sub_path': path,
-	\}
+	if empty(info)
+		let info = s:empty_project_info
+	endif
 
 	let s:project_cache[dir] = info
 	let s:project_cache[file_path] = info
@@ -92,12 +109,7 @@ function! current_project#clear_cache() abort " {{{
 	let s:project_cache = {}
 endfunction " }}}
 
-function! current_project#add_subproject_pattern(pat) abort " {{{
-	let info = current_project#info()
-	let s:subproject_patterns[info.main_path] = add(get(s:subproject_patterns, info.main_path, []), a:pat)
-	call current_project#clear_cache()
-endfunction " }}}
-
+" Persist settings {{{
 function! current_project#save_settings() abort " {{{
 	if s:subproject_patterns == s:subproject_patterns_orig
 		return
@@ -130,19 +142,12 @@ function! current_project#load_settings() abort " {{{
 	call current_project#clear_cache()
 endfunction " }}}
 
+" }}}
+
+" Subproject patterns {{{
 function! current_project#subproject_patterns(...) abort " {{{
 	let info = call('current_project#info', a:000)
 	return get(s:subproject_patterns, info.main_path, [])
-endfunction " }}}
-
-function! current_project#complete(ArgLead, CmdLine, CursorPos) abort " {{{
-	let prefix = current_project#info(expand('%')).path
-	return s:complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
-endfunction " }}}
-
-function! current_project#complete_main(ArgLead, CmdLine, CursorPos) abort " {{{
-	let prefix = current_project#info(expand('%')).main_path
-	return s:complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
 endfunction " }}}
 
 function! current_project#clear_sub_patterns() abort " {{{
@@ -150,6 +155,12 @@ function! current_project#clear_sub_patterns() abort " {{{
 	if has_key(s:subproject_patterns, info.main_path)
 		call remove(s:subproject_patterns, info.main_path)
 	endif
+endfunction " }}}
+
+function! current_project#add_subproject_pattern(pat) abort " {{{
+	let info = current_project#info()
+	let s:subproject_patterns[info.main_path] = add(get(s:subproject_patterns, info.main_path, []), a:pat)
+	call current_project#clear_cache()
 endfunction " }}}
 
 function! current_project#sub_pattern_list() abort " {{{
@@ -164,7 +175,35 @@ function! current_project#sub_pattern_list() abort " {{{
 		endfor
 	endif
 endfunction " }}}
+" }}}
 
+" Completion {{{
+function! current_project#complete(ArgLead, CmdLine, CursorPos) abort " {{{
+	let prefix = current_project#info(expand('%')).path
+	return s:complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
+endfunction " }}}
+
+function! current_project#complete_main(ArgLead, CmdLine, CursorPos) abort " {{{
+	let prefix = current_project#info(expand('%')).main_path
+	return s:complete_dir(prefix, a:ArgLead, a:CmdLine, a:CursorPos)
+endfunction " }}}
+
+" @vimlint(EVL103, 1)
+function! s:complete_dir(prefix, ArgLead, CmdLine, CursorPos) abort " {{{
+	let prefix = a:prefix . '/'
+	let candidates = glob(prefix . a:ArgLead . '*', 1, 1)
+	let result = []
+	for c in candidates
+		if isdirectory(c)
+			call add(result, substitute(c, prefix, '', '') . '/')
+		else
+			call add(result, substitute(c, prefix, '', ''))
+		endif
+	endfor
+	return result
+endfunction  " }}}
+" @vimlint(EVL103, 0)
+" }}}
 
 let s:home_path = expand('~')
 
@@ -185,23 +224,36 @@ function! current_project#summarize_path(path) abort " {{{
 	return path
 endfunction " }}}
 
-" @vimlint(EVL103, 1)
-function! s:complete_dir(prefix, ArgLead, CmdLine, CursorPos) abort " {{{
-	let prefix = a:prefix . '/'
-	let candidates = glob(prefix . a:ArgLead . '*', 1, 1)
-	let result = []
-	for c in candidates
-		if isdirectory(c)
-			call add(result, substitute(c, prefix, '', '') . '/')
-		else
-			call add(result, substitute(c, prefix, '', ''))
-		endif
-	endfor
-	return result
-endfunction  " }}}
-" @vimlint(EVL103, 0)
+" Default detection method {{{
+let s:def = {'name': 'default'}
 
-function! s:project_root_of(dir) abort " {{{
+function! s:def.detect(path) abort " {{{
+	let project_root = s:default_project_root_of(a:path)
+	if empty(project_root)
+		return {}
+	endif
+	let sub_project_name = s:default_subproject_name(project_root, a:path)
+	let main_project_name = fnamemodify(project_root, ':t')
+	let name = main_project_name
+	let path = project_root
+	if !empty(sub_project_name)
+		let name .= '/'.sub_project_name
+		let path .= '/'.sub_project_name
+	endif
+
+	return {
+	\  'name': name,
+	\  'main_name': main_project_name,
+	\  'sub_name': sub_project_name,
+	\  'path': path,
+	\  'main_path': project_root,
+	\  'sub_path': path,
+	\}
+endfunction " }}}
+
+call current_project#register_detection_method(s:def)
+
+function! s:default_project_root_of(dir) abort " {{{
 	let d = fnamemodify(a:dir, ':p')
 	while fnamemodify(d, ':h') != d
 		for f in s:project_root_filenames
@@ -215,7 +267,7 @@ function! s:project_root_of(dir) abort " {{{
 	return ''
 endfunction " }}}
 
-function! s:subproject_name(root, path) abort abort " {{{
+function! s:default_subproject_name(root, path) abort abort " {{{
 	let relpath = matchstr(fnamemodify(a:path, ':p'), '^\V' . escape(a:root, '\') . '/\v\zs[^/]+\/.*\ze')
 	for sr in get(s:subproject_patterns, a:root, [])
 		let m = matchlist(relpath, sr)
@@ -225,3 +277,4 @@ function! s:subproject_name(root, path) abort abort " {{{
 	endfor
 	return ''
 endfunction " }}}
+" }}}
