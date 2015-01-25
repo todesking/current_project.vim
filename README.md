@@ -16,6 +16,11 @@ let info = current_project#info() " returns current buffer's information
 \ }
 
 let file_info = current_project#file_info()
+" Same as current_project#info(), in addition `file_path` is available.
+
+let summarized = current_project#summarize_path(expand('%'))
+" =>
+'[current_project.vim] README.md'
 ```
 
 ## Project detection logic
@@ -38,12 +43,5 @@ command! -complete=customlist,current_project#complete_main -nargs=1 PE :exec ':
 
 ```vim
 " statusline example
-function! Vimrc_path_in_statusline()
-  let cp = current_project#file_info(expand('%'))
-  if empty(cp.name)
-	  return expand('%')
-  endif
-  return '[' . cp.name . '] ' . cp.file_path
-endfunction
-set statusline=%{Vimrc_path_in_statusline()}
+set statusline=%{current_project#summarize_path(expand('%'))}
 ```
