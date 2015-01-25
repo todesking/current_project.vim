@@ -108,7 +108,7 @@ function! current_project#save_settings() abort " {{{
 			let lines += [root . "\t" . pat]
 		endfor
 	endfor
-	if(!getftype('s:setting_dir') == 'dir')
+	if(!getftype('s:setting_dir') ==# 'dir')
 		call mkdir(s:setting_dir, 'p')
 	endif
 	call writefile(lines, s:setting_dir . '/subproject.tsv')
@@ -118,7 +118,7 @@ function! current_project#load_settings() abort " {{{
 	let file = s:setting_dir . '/subproject.tsv'
 	let s:subproject_patterns = {}
 	let s:subproject_patterns_orig = {}
-	if(getftype(file) != 'file')
+	if(getftype(file) !=# 'file')
 		return
 	endif
 	let lines = readfile(file)
