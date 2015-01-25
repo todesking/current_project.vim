@@ -165,6 +165,26 @@ function! current_project#sub_pattern_list() abort " {{{
 	endif
 endfunction " }}}
 
+
+let s:home_path = expand('~')
+
+function! current_project#summarize_path(path) abort " {{{
+	" if path =~# '\v\.rbenv|gems|\.vim'
+	" 	let path = substitute(path, '\v\~\/.rbenv\/versions\/([^/]+)\/', '[rbenv:\1] ', '')
+	" 	let path = substitute(path, '\v[\/ ]lib\/ruby\/gems\/([^/]+)\/gems\/([^/]+)\/', '[gem:\2] ', '')
+	" 	let path = substitute(path, '\v\~\/\.vim\/bundle\/([^/]+)\/', '[.vim/\1] ', '')
+	" endif
+
+	let info = current_project#file_info(a:path)
+	if !empty(info.name)
+		let path = '['.info['name'].'] '.info['file_path']
+	else
+		let path = simplify(a:path)
+		let path = substitute(path, s:home_path, '~', '')
+	endif
+	return path
+endfunction " }}}
+
 " @vimlint(EVL103, 1)
 function! s:complete_dir(prefix, ArgLead, CmdLine, CursorPos) abort " {{{
 	let prefix = a:prefix . '/'
